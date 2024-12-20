@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vazifalar - Avtomatlashtirilgan Dispatcher Tizimi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: #f4f7fa;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        header {
+            background-color: #00796b;
+            color: white;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        header .logo {
+            font-size: 1.7rem;
+            font-weight: 700;
+        }
+
+        header nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 20px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        header nav a:hover {
+            color: #a7ffeb;
+        }
+
+        .container {
+            padding: 40px 50px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #00796b;
+            font-weight: 600;
+        }
+
+        .task-list table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-list th,
+        .task-list td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        .task-list th {
+            background-color: #00796b;
+            color: white;
+        }
+
+        .task-list td {
+            background-color: #fff;
+        }
+
+        .task-list td button {
+            background-color: #00796b;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .task-list td button:hover {
+            background-color: #004d40;
+        }
+
+        .task-form input,
+        .task-form textarea,
+        .task-form select,
+        .task-form button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .task-form select {
+            background-color: #fff;
+        }
+
+        .task-form button {
+            background-color: #00796b;
+            color: white;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .task-form button:hover {
+            background-color: #004d40;
+        }
+
+        .search-filters input,
+        .search-filters select {
+            margin-right: 20px;
+            padding: 10px;
+        }
+
+        .search-filters button {
+            padding: 12px 20px;
+            background-color: #00796b;
+            color: white;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .search-filters button:hover {
+            background-color: #004d40;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            transition: opacity 0.3s ease;
+            padding: 10px;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 40px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show {
+            display: block;
+            opacity: 1;
+        }
+
+        .modal-content.show {
+            transform: scale(1);
+        }
+
+        .close-btn {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .modal form input,
+        .modal form select,
+        .modal form textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .modal form button {
+            background-color: #00796b;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .modal form button:hover {
+            background-color: #004d40;
+        }
+
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">Avtomatlashtirilgan Dispatcher</div>
+        <nav>
+            <a href="index.html">Asosiy Sahifa</a>
+            <a href="dashboard.html">Boshqaruv Paneli</a>
+            <a href="tasks.html" style="text-decoration: underline;">Vazifalar</a>
+            <a href="reports.html">Hisobotlar</a>
+            <a href="contact.html">Aloqa</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <!-- Vazifalar Ro'yxati -->
+        <section class="task-list">
+            <h2>Vazifalar Ro'yxati</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Vazifa Nomi</th>
+                        <th>Muddat</th>
+                        <th>Holat</th>
+                        <th>Mas’ul Shaxs</th>
+                        <th>Amallar</th>
+                    </tr>
+                </thead>
+                <tbody id="taskList">
+                    <!-- JavaScript bilan vazifalar dinamik tarzda joylanadi -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Yangi Vazifa Qo'shish Formasi -->
+        <section class="task-form">
+            <h2>Yangi Vazifa Qo'shish</h2>
+            <form id="addTaskForm">
+                <input type="text" id="taskName" placeholder="Vazifa nomi" required>
+                <textarea id="taskDescription" placeholder="Vazifa tavsifi" required></textarea>
+                <input type="date" id="dueDate" required>
+                <select id="responsiblePerson" required>
+                    <option value="">Mas’ul Shaxsni Tanlang</option>
+                    <option value="John Doe">John Doe</option>
+                    <option value="Jane Smith">Jane Smith</option>
+                    <option value="Ali Akbar">Ali Akbar</option>
+                </select>
+                <button type="submit">Qo'shish</button>
+            </form>
+        </section>
+
+        <!-- Qidiruv va Filtrlar -->
+        <section class="search-filters">
+            <h2>Qidiruv va Filtrlar</h2>
+            <input type="text" id="searchTask" placeholder="Vazifani qidirish...">
+            <select id="filterStatus">
+                <option value="">Holat bo‘yicha tanlang</option>
+                <option value="inProgress">Bajarilmoqda</option>
+                <option value="completed">Yakunlangan</option>
+            </select>
+            <select id="filterEmployee">
+                <option value="">Mas’ul Xodim</option>
+                <option value="John Doe">John Doe</option>
+                <option value="Jane Smith">Jane Smith</option>
+                <option value="Ali Akbar">Ali Akbar</option>
+            </select>
+            <button onclick="filterTasks()">Filtrlash</button>
+        </section>
+    </main>
+
+    <!-- Modal: Vazifa Tahrirlash -->
+    <div id="editTaskModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('editTaskModal')">&times;</span>
+            <h2>Vazifani Tahrirlash</h2>
+            <form id="editTaskForm">
+                <input type="text" id="editTaskName" placeholder="Vazifa nomi" required>
+                <textarea id="editTaskDescription" placeholder="Vazifa tavsifi" required></textarea>
+                <input type="date" id="editDueDate" required>
+                <select id="editResponsiblePerson" required>
+                    <option value="">Mas’ul Shaxsni Tanlang</option>
+                    <option value="John Doe">John Doe</option>
+                    <option value="Jane Smith">Jane Smith</option>
+                    <option value="Ali Akbar">Ali Akbar</option>
+                </select>
+                <button type="submit">Saqlash</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Initial data
+        const tasks = [
+            { name: "Task 1", description: "Description 1", dueDate: "2024-12-25", status: "inProgress", responsible: "John Doe" },
+            { name: "Task 2", description: "Description 2", dueDate: "2024-12-28", status: "completed", responsible: "Jane Smith" },
+            { name: "Task 3", description: "Description 3", dueDate: "2024-12-30", status: "inProgress", responsible: "Ali Akbar" }
+        ];
+
+        // Dinamik tarzda vazifalarni ro'yxatga qo'shish
+        function renderTasks(filteredTasks = tasks) {
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+            filteredTasks.forEach((task, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${task.name}</td>
+                    <td>${task.dueDate}</td>
+                    <td>${task.status === 'inProgress' ? 'Bajarilmoqda' : 'Yakunlangan'}</td>
+                    <td>${task.responsible}</td>
+                    <td>
+                        <button onclick="editTask(${index})">Tahrirlash</button>
+                        <button onclick="deleteTask(${index})">O'chirish</button>
+                    </td>
+                `;
+                taskList.appendChild(row);
+            });
+        }
+
+        // Vazifa qo'shish
+        const addTaskForm = document.getElementById('addTaskForm');
+        addTaskForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const taskName = document.getElementById('taskName').value;
+            const taskDescription = document.getElementById('taskDescription').value;
+            const dueDate = document.getElementById('dueDate').value;
+            const responsiblePerson = document.getElementById('responsiblePerson').value;
+
+            tasks.push({ name: taskName, description: taskDescription, dueDate, status: 'inProgress', responsible: responsiblePerson });
+            renderTasks();
+            addTaskForm.reset();
+        });
+
+        // Vazifa tahrirlash
+        function editTask(index) {
+            const task = tasks[index];
+            document.getElementById('editTaskName').value = task.name;
+            document.getElementById('editTaskDescription').value = task.description;
+            document.getElementById('editDueDate').value = task.dueDate;
+            document.getElementById('editResponsiblePerson').value = task.responsible;
+            openModal('editTaskModal');
+        }
+
+        // Vazifani o'chirish
+        function deleteTask(index) {
+            tasks.splice(index, 1);
+            renderTasks();
+        }
+
+        // Modalni ochish
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+            document.querySelector(`#${modalId} .modal-content`).classList.add('show');
+        }
+
+        // Modalni yopish
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+            document.querySelector(`#${modalId} .modal-content`).classList.remove('show');
+        }
+
+        // Vazifalarni filtrash
+        function filterTasks() {
+            const searchTerm = document.getElementById('searchTask').value.toLowerCase();
+            const statusFilter = document.getElementById('filterStatus').value;
+            const employeeFilter = document.getElementById('filterEmployee').value;
+
+            const filteredTasks = tasks.filter(task => {
+                return (
+                    task.name.toLowerCase().includes(searchTerm) &&
+                    (statusFilter === '' || task.status === statusFilter) &&
+                    (employeeFilter === '' || task.responsible === employeeFilter)
+                );
+            });
+
+            renderTasks(filteredTasks);
+        }
+
+        // Dastlabki vazifalarni ko'rsatish
+        renderTasks();
+    </script>
+</body>
+
+</html>

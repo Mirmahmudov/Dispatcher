@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hisobotlar - Dispatcher Tizimi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* Umumiy dizayn */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f7fa;
+        }
+
+        header {
+            background-color: #00796b;
+            color: white;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        header .logo {
+            font-size: 1.7rem;
+            font-weight: 700;
+        }
+
+        header nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 20px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        header nav a:hover {
+            color: #a7ffeb;
+        }
+
+        .container {
+            padding: 40px 50px;
+        }
+
+        .reports-section {
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #00796b;
+            font-weight: 600;
+        }
+
+        .filters {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filters select, .filters input {
+            padding: 10px;
+            font-size: 1rem;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .export-btn {
+            background-color: #00796b;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .export-btn:hover {
+            background-color: #004d40;
+        }
+
+        .statistics {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            background-color: white;
+            padding: 20px;
+            width: 30%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .stat-box h4 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .stat-box p {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        /* Mobil va ekran o'lchamlariga moslashuvchanlik */
+        @media (max-width: 768px) {
+            .stat-box {
+                width: 48%;
+            }
+
+            .filters select, .filters input {
+                width: 48%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stat-box {
+                width: 100%;
+            }
+
+            .filters select, .filters input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">Avtomatlashtirilgan Dispatcher</div>
+        <nav>
+            <a href="index.html">Asosiy Sahifa</a>
+            <a href="dashboard.html">Boshqaruv Paneli</a>
+            <a href="tasks.html">Vazifalar</a>
+            <a href="reports.html" style="text-decoration: underline;">Hisobotlar</a>
+            <a href="contact.html">Aloqa</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="reports-section">
+            <h2>Hisobotlar</h2>
+
+            <!-- Filtrlar va vaqt tanlash -->
+            <div class="filters">
+                <select id="reportType" onchange="updateReports()">
+                    <option value="monthly">Oylik Hisobot</option>
+                    <option value="yearly">Yillik Hisobot</option>
+                </select>
+                <input type="date" id="startDate" onchange="updateReports()">
+                <input type="date" id="endDate" onchange="updateReports()">
+            </div>
+
+            <!-- Statistika bo'limi -->
+            <div class="statistics">
+                <div class="stat-box">
+                    <h4>Tugatilgan Vazifalar</h4>
+                    <p id="completedTasks">0</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Kechiktirilgan Vazifalar</h4>
+                    <p id="delayedTasks">0</p>
+                </div>
+                <div class="stat-box">
+                    <h4>Yuk Tashish Hajmi</h4>
+                    <p id="cargoVolume">0</p>
+                </div>
+            </div>
+
+            <!-- Diagrammalar -->
+            <div class="chart-container">
+                <h3>Vazifalar Holati</h3>
+                <canvas id="tasksChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>Yuk Tashish Hajmi</h3>
+                <canvas id="cargoChart"></canvas>
+            </div>
+
+            <!-- PDF Eksport qilish -->
+            <button class="export-btn" onclick="exportToPDF()">PDF formatida saqlash</button>
+        </section>
+    </main>
+
+    <script>
+        // Statistika ma'lumotlari
+        let completedTasks = 45;
+        let delayedTasks = 10;
+        let cargoVolume = 3500;
+
+        // Diagramma uchun ma'lumotlar
+        const tasksData = {
+            labels: ['Bajarilmoqda', 'Yakunlangan', 'Kechiktirilgan'],
+            datasets: [{
+                label: 'Vazifa Holati',
+                data: [30, 45, 10],
+                backgroundColor: ['#00796b', '#388e3c', '#d32f2f'],
+                borderColor: ['#00796b', '#388e3c', '#d32f2f'],
+                borderWidth: 1
+            }]
+        };
+
+        const cargoData = {
+            labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+            datasets: [{
+                label: 'Yuk Tashish Hajmi',
+                data: [800, 1000, 1200, 1500],
+                backgroundColor: '#00796b',
+                borderColor: '#004d40',
+                borderWidth: 1
+            }]
+        };
+
+        // Statistika ko'rsatish
+        function updateStats() {
+            document.getElementById('completedTasks').textContent = completedTasks;
+            document.getElementById('delayedTasks').textContent = delayedTasks;
+            document.getElementById('cargoVolume').textContent = cargoVolume;
+        }
+
+        // Diagrammalarni yaratish
+        function createCharts() {
+            const ctxTasks = document.getElementById('tasksChart').getContext('2d');
+            const tasksChart = new Chart(ctxTasks, {
+                type: 'pie',
+                data: tasksData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    }
+                }
+            });
+
+            const ctxCargo = document.getElementById('cargoChart').getContext('2d');
+            const cargoChart = new Chart(ctxCargo, {
+                type: 'bar',
+                data: cargoData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // PDF eksport qilish funksiyasi
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Hisobotni qo'shish
+            doc.text('Hisobot - Dispatcher Tizimi', 20, 20);
+            doc.text(`Tugatilgan Vazifalar: ${completedTasks}`, 20, 30);
+            doc.text(`Kechiktirilgan Vazifalar: ${delayedTasks}`, 20, 40);
+            doc.text(`Yuk Tashish Hajmi: ${cargoVolume} tonna`, 20, 50);
+
+            // Diagrammalarni base64 formatda olish
+            const tasksChartImg = document.getElementById('tasksChart').toDataURL('image/png');
+            const cargoChartImg = document.getElementById('cargoChart').toDataURL('image/png');
+
+            // Diagramma rasmga olish va PDFga qo'shish
+            doc.addImage(cargoChartImg, 'PNG', 20, 60, 180, 100);
+            doc.addImage(tasksChartImg, 'PNG', 20, 170, 180, 100);
+
+            // PDFni yuklash
+            doc.save('hisobot.pdf');
+        }
+
+        // Hisobotni yangilash
+        function updateReports() {
+            // Masalan, sana tanlanganida ma'lumotlarni yangilash
+            // Shuningdek, boshqa parametrlarni qo'shish mumkin
+            completedTasks = Math.floor(Math.random() * 100);  // Misol uchun tasodifiy qiymatlar
+            delayedTasks = Math.floor(Math.random() * 20);
+            cargoVolume = Math.floor(Math.random() * 5000);
+
+            tasksData.datasets[0].data = [completedTasks * 0.3, completedTasks * 0.5, delayedTasks];  // Dinamik yangilanish
+            cargoData.datasets[0].data = [cargoVolume * 0.2, cargoVolume * 0.25, cargoVolume * 0.3, cargoVolume * 0.25];  // Dinamik yangilanish
+
+            updateStats();
+            createCharts();
+        }
+
+        // Dastlabki ishni yaratish
+        updateStats();
+        createCharts();
+
+    </script>
+</body>
+
+</html>
